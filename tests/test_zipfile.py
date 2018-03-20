@@ -1,3 +1,4 @@
+# This is a copy of the tests from the stdlib
 # We can test part of the module without zlib.
 try:
     import zlib
@@ -10,16 +11,16 @@ import struct
 import sys
 import time
 import unittest
+import zipfile
 from StringIO import StringIO
 from random import randint, random, getrandbits
 from tempfile import TemporaryFile
 from test.test_support import TESTFN, TESTFN_UNICODE, TESTFN_ENCODING, \
-    run_unittest, findfile, unlink, rmtree, \
+    findfile, unlink, rmtree, \
     check_warnings
 from unittest import skipUnless
 
 import zipfile2
-import zipfile
 
 try:
     TESTFN_UNICODE.encode(TESTFN_ENCODING)
@@ -822,91 +823,6 @@ class TestZip64InSmallFiles(unittest.TestCase):
         unlink(TESTFN2)
 
 
-class PyZipFileTests(unittest.TestCase):
-    def requiresWriteAccess(self, path):
-        if not os.access(path, os.W_OK):
-            self.skipTest('requires write access to the installed location')
-        filename = os.path.join(path, 'test_zipfile.try')
-        try:
-            fd = os.open(filename, os.O_WRONLY | os.O_CREAT)
-            os.close(fd)
-        except Exception:
-            self.skipTest('requires write access to the installed location')
-        unlink(filename)
-
-    def test_write_pyfile(self):
-        self.requiresWriteAccess(os.path.dirname(__file__))
-        with zipfile.PyZipFile(TemporaryFile(), "w") as zipfp:
-            fn = __file__
-            if fn.endswith('.pyc') or fn.endswith('.pyo'):
-                fn = fn[:-1]
-
-            zipfp.writepy(fn)
-
-            bn = os.path.basename(fn)
-            self.assertNotIn(bn, zipfp.namelist())
-            self.assertTrue(bn + 'o' in zipfp.namelist() or
-                            bn + 'c' in zipfp.namelist())
-
-        with zipfile.PyZipFile(TemporaryFile(), "w") as zipfp:
-            fn = __file__
-            if fn.endswith(('.pyc', '.pyo')):
-                fn = fn[:-1]
-
-            zipfp.writepy(fn, "testpackage")
-
-            bn = "%s/%s" % ("testpackage", os.path.basename(fn))
-            self.assertNotIn(bn, zipfp.namelist())
-            self.assertTrue(bn + 'o' in zipfp.namelist() or
-                            bn + 'c' in zipfp.namelist())
-
-    def test_write_python_package(self):
-        import email
-        packagedir = os.path.dirname(email.__file__)
-        self.requiresWriteAccess(packagedir)
-
-        with zipfile.PyZipFile(TemporaryFile(), "w") as zipfp:
-            zipfp.writepy(packagedir)
-
-            # Check for a couple of modules at different levels of the
-            # hierarchy
-            names = zipfp.namelist()
-            self.assertTrue('email/__init__.pyo' in names or
-                            'email/__init__.pyc' in names)
-            self.assertTrue('email/mime/text.pyo' in names or
-                            'email/mime/text.pyc' in names)
-
-    def test_write_python_directory(self):
-        os.mkdir(TESTFN2)
-        try:
-            with open(os.path.join(TESTFN2, "mod1.py"), "w") as fp:
-                fp.write("print(42)\n")
-
-            with open(os.path.join(TESTFN2, "mod2.py"), "w") as fp:
-                fp.write("print(42 * 42)\n")
-
-            with open(os.path.join(TESTFN2, "mod2.txt"), "w") as fp:
-                fp.write("bla bla bla\n")
-
-            zipfp = zipfile.PyZipFile(TemporaryFile(), "w")
-            zipfp.writepy(TESTFN2)
-
-            names = zipfp.namelist()
-            self.assertTrue('mod1.pyc' in names or 'mod1.pyo' in names)
-            self.assertTrue('mod2.pyc' in names or 'mod2.pyo' in names)
-            self.assertNotIn('mod2.txt', names)
-
-        finally:
-            rmtree(TESTFN2)
-
-    def test_write_non_pyfile(self):
-        with zipfile.PyZipFile(TemporaryFile(), "w") as zipfp:
-            with open(TESTFN, 'w') as fid:
-                fid.write('most definitely not a python file')
-            self.assertRaises(RuntimeError, zipfp.writepy, TESTFN)
-            os.remove(TESTFN)
-
-
 class OtherTests(unittest.TestCase):
     zips_with_bad_crc = {
         zipfile.ZIP_STORED: (
@@ -971,26 +887,6 @@ class OtherTests(unittest.TestCase):
             zf = zipfile2.ZipFile(TESTFN)
         except zipfile.BadZipfile:
             pass
-
-    def test_is_zip_erroneous_file(self):
-        """Check that is_zipfile() correctly identifies non-zip files."""
-        # - passing a filename
-        with open(TESTFN, "w") as fp:
-            fp.write("this is not a legal zip file\n")
-        chk = zipfile.is_zipfile(TESTFN)
-        self.assertFalse(chk)
-        # - passing a file object
-        with open(TESTFN, "rb") as fp:
-            chk = zipfile.is_zipfile(fp)
-            self.assertTrue(not chk)
-        # - passing a file-like object
-        fp = StringIO()
-        fp.write("this is not a legal zip file\n")
-        chk = zipfile.is_zipfile(fp)
-        self.assertTrue(not chk)
-        fp.seek(0, 0)
-        chk = zipfile.is_zipfile(fp)
-        self.assertTrue(not chk)
 
     def test_damaged_zipfile(self):
         """Check that zipfiles with missing bytes at the end raise BadZipFile."""
@@ -1775,12 +1671,5 @@ class UniversalNewlineTests(unittest.TestCase):
         unlink(TESTFN2)
 
 
-def test_main():
-    run_unittest(TestsWithSourceFile, TestZip64InSmallFiles, OtherTests,
-                 PyZipFileTests, DecryptionTests, TestsWithMultipleOpens,
-                 TestWithDirectory, UniversalNewlineTests,
-                 TestsWithRandomBinaryFiles)
-
-
 if __name__ == "__main__":
-    test_main()
+    unittest.main()

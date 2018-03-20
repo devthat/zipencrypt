@@ -3,11 +3,26 @@ import stat
 import struct
 import time
 import zlib
-from zipfile import ZipFile as BaseZipfile, ZipInfo, ZIP_STORED, ZIP64_LIMIT, ZIP_DEFLATED, LargeZipFile, crc32
+from zipfile import ZipFile as BaseZipfile, ZipInfo, ZIP_STORED, ZIP64_LIMIT, \
+    ZIP_DEFLATED, LargeZipFile, crc32, \
+    _ZipDecrypter
+
+randomFunc = os.urandom
+
+
+class _ZipEncrypter(_ZipDecrypter):
+    def __call__(self, c):
+        """Encrypt a single character."""
+        _c = ord(c)
+        k = self.key2 | 2
+        _c = _c ^ (((k * (k ^ 1)) >> 8) & 255)
+        _c = chr(_c)
+        self._UpdateKeys(c)  # this is the only line that actually changed
+        return _c
 
 
 class ZipFile(BaseZipfile):
-    def write(self, filename, arcname=None, compress_type=None):
+    def write(self, filename, arcname=None, compress_type=None, pwd=None):
         """Put the bytes from filename into the archive under the name
         arcname."""
         if not self.fp:
@@ -65,6 +80,20 @@ class ZipFile(BaseZipfile):
                                         zlib.DEFLATED, -15)
             else:
                 cmpr = None
+            pwd = pwd or self.pwd
+            if pwd:
+                zinfo.flag_bits |= 0x8 | 0x1  # set stream and encrypted
+                ze = _ZipEncrypter(pwd)
+                encrypt = lambda x: "".join(map(ze, x))
+                zinfo._raw_time = (
+                    zinfo.date_time[3] << 11
+                    | zinfo.date_time[4] << 5
+                    | (zinfo.date_time[5] // 2))
+                check_byte = (zinfo._raw_time >> 8) & 0xff
+                enryption_header = randomFunc(11) + chr(check_byte)
+                self.fp.write(encrypt(enryption_header))
+            else:
+                encrypt = lambda x: x
             file_size = 0
             while 1:
                 buf = fp.read(1024 * 8)
@@ -75,11 +104,11 @@ class ZipFile(BaseZipfile):
                 if cmpr:
                     buf = cmpr.compress(buf)
                     compress_size = compress_size + len(buf)
-                self.fp.write(buf)
+                self.fp.write(encrypt(buf))
         if cmpr:
             buf = cmpr.flush()
             compress_size = compress_size + len(buf)
-            self.fp.write(buf)
+            self.fp.write(encrypt(buf))
             zinfo.compress_size = compress_size
         else:
             zinfo.compress_size = file_size
@@ -87,19 +116,29 @@ class ZipFile(BaseZipfile):
         zinfo.file_size = file_size
         if not zip64 and self._allowZip64:
             if file_size > ZIP64_LIMIT:
-                raise RuntimeError('File size has increased during compressing')
+                raise RuntimeError(
+                    'File size has increased during compressing')
             if compress_size > ZIP64_LIMIT:
-                raise RuntimeError('Compressed size larger than uncompressed size')
-        # Seek backwards and write file header (which will now include
-        # correct CRC and file sizes)
-        position = self.fp.tell()  # Preserve current position in file
-        self.fp.seek(zinfo.header_offset, 0)
-        self.fp.write(zinfo.FileHeader(zip64))
-        self.fp.seek(position, 0)
+                raise RuntimeError(
+                    'Compressed size larger than uncompressed size')
+        if pwd:
+            # Write CRC and file sizes after the file data
+            zinfo.compress_size += 12
+            fmt = '<LQQ' if zip64 else '<LLL'
+            self.fp.write(struct.pack(
+                fmt, zinfo.CRC, zinfo.compress_size, zinfo.file_size))
+            self.fp.flush()
+        else:
+            # Seek backwards and write file header (which will now include
+            # correct CRC and file sizes)
+            position = self.fp.tell()  # Preserve current position in file
+            self.fp.seek(zinfo.header_offset, 0)
+            self.fp.write(zinfo.FileHeader(zip64))
+            self.fp.seek(position, 0)
         self.filelist.append(zinfo)
         self.NameToInfo[zinfo.filename] = zinfo
 
-    def writestr(self, zinfo_or_arcname, bytes, compress_type=None):
+    def writestr(self, zinfo_or_arcname, bytes, compress_type=None, pwd=None):
         """Write a file into the archive.  The contents is the string
         'bytes'.  'zinfo_or_arcname' is either a ZipInfo instance or
         the name of the file in the archive."""
@@ -139,6 +178,23 @@ class ZipFile(BaseZipfile):
                 zinfo.compress_size > ZIP64_LIMIT
         if zip64 and not self._allowZip64:
             raise LargeZipFile("Filesize would require ZIP64 extensions")
+
+        pwd = pwd or self.pwd
+        if pwd:
+            zinfo.flag_bits |= 0x01
+            zinfo.compress_size += 12  # 12 extra bytes for the header
+            if zinfo.flag_bits & 0x8:
+                zinfo._raw_time = (
+                    zinfo.date_time[3] << 11
+                    | zinfo.date_time[4] << 5
+                    | (zinfo.date_time[5] // 2))
+                check_byte = (zinfo._raw_time >> 8) & 0xff
+            else:
+                check_byte = (zinfo.CRC >> 24) & 0xff
+            enryption_header = randomFunc(11) + chr(check_byte)
+            ze = _ZipEncrypter(pwd)
+            bytes = "".join(map(ze, enryption_header + bytes))
+
         self.fp.write(zinfo.FileHeader(zip64))
         self.fp.write(bytes)
         if zinfo.flag_bits & 0x08:
