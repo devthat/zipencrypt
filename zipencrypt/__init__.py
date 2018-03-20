@@ -1,4 +1,4 @@
-from .zipfile2 import ZipFile
+from .zipencrypt import ZipFile
 from zipfile import BadZipfile, error, ZIP_STORED, ZIP_DEFLATED, is_zipfile, \
     ZipInfo, PyZipFile, LargeZipFile
 
