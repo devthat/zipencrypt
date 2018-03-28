@@ -1,0 +1,3 @@
+*.pyc
+virtualenv
+__pycache__
