@@ -656,7 +656,7 @@ class TestZip64InSmallFiles(unittest.TestCase):
         self._limit = zipfile.ZIP64_LIMIT
         self._filecount_limit = zipfile.ZIP_FILECOUNT_LIMIT
         zipfile.ZIP64_LIMIT = 1000
-        zipencrypt.zipencrypt.ZIP64_LIMIT = 1000
+        zipencrypt.zipencrypt2.ZIP64_LIMIT = 1000
         zipfile.ZIP_FILECOUNT_LIMIT = 9
 
         line_gen = ("Test of zipfile line %d." % i
@@ -817,7 +817,7 @@ class TestZip64InSmallFiles(unittest.TestCase):
 
     def tearDown(self):
         zipfile.ZIP64_LIMIT = self._limit
-        zipencrypt.zipencrypt.ZIP64_LIMIT = self._limit
+        zipencrypt.zipencrypt2.ZIP64_LIMIT = self._limit
         zipfile.ZIP_FILECOUNT_LIMIT = self._filecount_limit
         unlink(TESTFN)
         unlink(TESTFN2)

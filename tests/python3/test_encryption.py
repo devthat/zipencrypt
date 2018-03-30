@@ -1,22 +1,23 @@
 import io
 import tempfile
 import unittest
+from test.support import TESTFN
 
 from zipencrypt import ZipFile, ZipInfo
-from zipencrypt.zipencrypt import _ZipEncrypter, _ZipDecrypter
+from zipencrypt.zipencrypt3 import _ZipEncrypter, _ZipDecrypter
 
 
 class TestEncryption(unittest.TestCase):
     def setUp(self):
-        self.plain = "plaintext" * 3
-        self.pwd = "password"
+        self.plain = b"plaintext" * 3
+        self.pwd = b"password"
 
     def test_roundtrip(self):
         encrypt = _ZipEncrypter(self.pwd)
         encrypted = map(encrypt, self.plain)
 
         decrypt = _ZipDecrypter(self.pwd)
-        decrypted = "".join(map(decrypt, encrypted))
+        decrypted = bytes(map(decrypt, encrypted))
 
         self.assertEqual(self.plain, decrypted)
 
@@ -24,8 +25,18 @@ class TestEncryption(unittest.TestCase):
 class TestZipfile(unittest.TestCase):
     def setUp(self):
         self.zipfile = io.BytesIO()
-        self.plain = "plaintext" * 3
-        self.pwd = "password"
+        self.plain = b"plaintext" * 3
+        self.pwd = b"password"
+
+    def test_raise_error_when_pwd_is_not_bytes(self):
+        def assertRaisesTypeError(f, *args):
+            with self.assertRaises(TypeError) as ex:
+                f(*args)
+            self.assertEqual("pwd: expected bytes, got <class 'str'>", str(ex.exception))
+
+        zipped = ZipFile(TESTFN, "w")
+        assertRaisesTypeError(zipped.writestr, "file.txt", b"data", None, "a_string")
+        assertRaisesTypeError(zipped.write, TESTFN, None, None, "a_string")
 
     def test_writestr(self):
         with ZipFile(self.zipfile, mode="w") as zipfd:
@@ -64,7 +75,7 @@ class TestZipfile(unittest.TestCase):
         self.assertEqual(self.plain, content)
 
     def test_write_with_password(self):
-        with tempfile.NamedTemporaryFile(bufsize=0) as fd:
+        with tempfile.NamedTemporaryFile(buffering=0) as fd:
             fd.write(self.plain)
 
             with ZipFile(self.zipfile, mode="w") as zipfd:
@@ -75,7 +86,7 @@ class TestZipfile(unittest.TestCase):
         self.assertEqual(self.plain, content)
 
     def test_write_with_password_keep_file_open(self):
-        with tempfile.NamedTemporaryFile(bufsize=0) as fd:
+        with tempfile.NamedTemporaryFile(buffering=0) as fd:
             fd.write(self.plain)
 
             with ZipFile(self.zipfile, mode="w") as zipfd:
