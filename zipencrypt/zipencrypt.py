@@ -67,6 +67,10 @@ class ZipFile(BaseZipfile):
             self.fp.write(zinfo.FileHeader(False))
             return
 
+        pwd = pwd or self.pwd
+        if pwd:
+            zinfo.flag_bits |= 0x8 | 0x1  # set stream and encrypted
+
         with open(filename, "rb") as fp:
             # Must overwrite CRC and sizes with correct data later
             zinfo.CRC = CRC = 0
@@ -80,9 +84,7 @@ class ZipFile(BaseZipfile):
                                         zlib.DEFLATED, -15)
             else:
                 cmpr = None
-            pwd = pwd or self.pwd
             if pwd:
-                zinfo.flag_bits |= 0x8 | 0x1  # set stream and encrypted
                 ze = _ZipEncrypter(pwd)
                 encrypt = lambda x: "".join(map(ze, x))
                 zinfo._raw_time = (
