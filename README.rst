@@ -5,6 +5,7 @@ zipencrypt is a Python module to provide *weak* password-based
 encryption for zipfiles. It is meant as a drop-in replacement for
 zipfile from the standard lib and provides the counterpart to the
 decryption implemented there.
+It is implemented in pure python and does not rely on any 3rd party libraries.
 
 Installation
 ------------
