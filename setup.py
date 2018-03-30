@@ -6,7 +6,7 @@ with open('README.rst') as f:
 
 setup(
     name='zipencrypt',
-    version='0.1.3',
+    version='0.1.4',
     description='Encryption for zipfile',
     long_description=readme,
     url='https://github.com/norcuni/zipencrypt',
