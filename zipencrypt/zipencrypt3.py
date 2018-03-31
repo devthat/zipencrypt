@@ -8,8 +8,7 @@ import struct
 
 import time
 
-# randomFunc = os.urandom
-randomFunc = lambda n: b"X"*n
+randomFunc = os.urandom
 
 
 class _ZipEncrypter(_ZipDecrypter):
