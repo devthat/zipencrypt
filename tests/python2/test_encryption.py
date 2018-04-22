@@ -2,7 +2,7 @@ import io
 import tempfile
 import unittest
 
-from zipencrypt import ZipFile, ZipInfo
+from zipencrypt import ZipFile, ZipInfo, ZIP_DEFLATED
 from zipencrypt.zipencrypt2 import _ZipEncrypter, _ZipDecrypter
 
 
@@ -81,6 +81,15 @@ class TestZipfile(unittest.TestCase):
             with ZipFile(self.zipfile, mode="w") as zipfd:
                 zipfd.write(fd.name, arcname="file1.txt", pwd=self.pwd)
                 content = zipfd.read("file1.txt", pwd=self.pwd)
+
+        self.assertEqual(self.plain, content)
+
+    def test_setcompressiontype(self):
+        with ZipFile(self.zipfile, mode="w") as zipfd:
+            zipfd.writestr("file1.txt", self.plain, compress_type=ZIP_DEFLATED, pwd=self.pwd)
+
+        with ZipFile(self.zipfile) as zipfd:
+            content = zipfd.read("file1.txt", pwd=self.pwd)
 
         self.assertEqual(self.plain, content)
 

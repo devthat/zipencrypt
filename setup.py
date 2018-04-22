@@ -6,7 +6,7 @@ with open('README.rst') as f:
 
 setup(
     name='zipencrypt',
-    version='0.2.1',
+    version='0.3.0',
     description='Encryption for zipfile',
     long_description=readme,
     url='https://github.com/devthat/zipencrypt',
@@ -16,7 +16,9 @@ setup(
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Topic :: System :: Archiving :: Compression',

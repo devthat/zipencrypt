@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from test.support import TESTFN
 
-from zipencrypt import ZipFile, ZipInfo
-from zipencrypt.zipencrypt3 import _ZipEncrypter, _ZipDecrypter
+from zipencrypt import ZipFile
+from zipencrypt.zipencrypt3 import _ZipEncrypter, _ZipDecrypter, ZipInfo, ZIP_DEFLATED
 
 
 class TestEncryption(unittest.TestCase):
@@ -32,7 +32,7 @@ class TestZipfile(unittest.TestCase):
         def assertRaisesTypeError(f, *args):
             with self.assertRaises(TypeError) as ex:
                 f(*args)
-            self.assertEqual("pwd: expected bytes, got <class 'str'>", str(ex.exception))
+            self.assertEqual("pwd: expected bytes, got str", str(ex.exception))
 
         zipped = ZipFile(TESTFN, "w")
         assertRaisesTypeError(zipped.writestr, "file.txt", b"data", None, "a_string")
@@ -43,7 +43,7 @@ class TestZipfile(unittest.TestCase):
             zipfd.writestr("file1.txt", self.plain, pwd=self.pwd)
         with ZipFile(self.zipfile) as zipfd:
             content = zipfd.read("file1.txt", pwd=self.pwd)
-
+            self.assertRaises(RuntimeError, zipfd.read, "file1.txt")
         self.assertEqual(self.plain, content)
 
     def test_writestr_keep_file_open(self):
@@ -82,7 +82,7 @@ class TestZipfile(unittest.TestCase):
                 zipfd.write(fd.name, arcname="file1.txt", pwd=self.pwd)
             with ZipFile(self.zipfile) as zipfd:
                 content = zipfd.read("file1.txt", pwd=self.pwd)
-
+                self.assertRaises(RuntimeError, zipfd.read, "file1.txt")
         self.assertEqual(self.plain, content)
 
     def test_write_with_password_keep_file_open(self):
@@ -92,6 +92,15 @@ class TestZipfile(unittest.TestCase):
             with ZipFile(self.zipfile, mode="w") as zipfd:
                 zipfd.write(fd.name, arcname="file1.txt", pwd=self.pwd)
                 content = zipfd.read("file1.txt", pwd=self.pwd)
+
+        self.assertEqual(self.plain, content)
+
+    def test_setcompressiontype(self):
+        with ZipFile(self.zipfile, mode="w") as zipfd:
+            zipfd.writestr("file1.txt", self.plain, compress_type=ZIP_DEFLATED, pwd=self.pwd)
+
+        with ZipFile(self.zipfile) as zipfd:
+            content = zipfd.read("file1.txt", pwd=self.pwd)
 
         self.assertEqual(self.plain, content)
 

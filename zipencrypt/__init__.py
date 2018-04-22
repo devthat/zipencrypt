@@ -9,9 +9,9 @@ if PY2:
     __all__ = ["BadZipfile", "error", "ZIP_STORED", "ZIP_DEFLATED",
                "is_zipfile", "ZipInfo", "ZipFile", "PyZipFile", "LargeZipFile"]
 else:
-    from .zipencrypt3 import ZipFile
+    from .zipencrypt3 import ZipFile, is_zipfile, ZipInfo
     from zipfile import BadZipFile, BadZipfile, error, ZIP_STORED, \
-        ZIP_DEFLATED, ZIP_BZIP2, ZIP_LZMA, is_zipfile, ZipInfo, PyZipFile, \
+        ZIP_DEFLATED, ZIP_BZIP2, ZIP_LZMA, PyZipFile, \
         LargeZipFile
     __all__ = ["BadZipFile", "BadZipfile", "error",
                "ZIP_STORED", "ZIP_DEFLATED", "ZIP_BZIP2", "ZIP_LZMA",
