@@ -1,27 +1,23 @@
+sudo: false
+dist: trusty
+
 language: python
 
-matrix:
+jobs:
   include:
-  - python: "2.7"
-    env: TEST_SUITE=tests/python2/
-    install: pip install mock
-  - python: "3.5"
-    env: TEST_SUITE=tests/python3/
-
-script: python -m unittest discover $TEST_SUITE
-
-deploy:
-  - provider: pypi
-    user: norcuni
-    server: https://test.pypi.org/legacy/
-    password:
-      secure: tSS0BD16HGrBoo3gHT+0ormIQzvs7nkhygNWdiEBPB7bj9QknGBgZzsBnQVI6EpzpgA+F2OjsTrTd8dpYeiC3apVyJ9kj1Wc7MovPCaMscLwemX34b7lLsz3GMwdVX/L1gAutb+1ftoiEJxGwmRhlcLO4r+5D1GRkdgARHU2RRm1GUjlHD1s4ubpmiosVrLpqPgygwgkF5eLet16eLY0wgbqQ0IgP4dqgTCeKRcrzAYLEmbgKSFh7bsGk++yFCrPxgkgL/udfNjiQy7q8tWVzOE7np6rHddk0wX0Tg8vey8CPIMnkLIhdClbPTFBU794uyMoKMtBywoPhPIaRyGB1AzpXDqHZnNZCF8H3JsgPac3qNfw1n3pE3ji+dpJ4hU2DNPw6golOzbvngReDqkXq4JbE0+mLY1gqF77mlbwlGu4pl35ioA4KJz9oahQXgCaOBowSdTClgtFS6Sh//myEiWyn0lJRBkdAHk3KhfoZR+tahEfnU3F2s+ATtT4gDBd/EbpuTWql7wySpJfXF+g8FnvBnNN09lvJrxcCxZGi3wWXlrusNE3ASD/FVYSvLuEJr/XpsOtcm5x4Ay6E7tA4VtmH338c3kBK03RM1r0nLotcsZcZ7pz0M7N5hPFYXWwZsS4myl2BD8XE9Neapm4BKm+X7oi0FVfPzAicRedR8A=
-    on:
-      branch: dev
-  - provider: pypi
-    user: norcuni
-    password:
-      secure: q9UrBosh5vLnIaSJC+Df4fkjQ01roiTCAYPvK2wLUM63fXng6KoUKJ389iRKZMdVtVR80iF2WHlRzYXKB5uBfqLaG5XaPvXC1kzRcVLcF7Sx9RPQydxGRpc/bvtCppL8CglbXh9tQzzDlH4A0xPMXIxa03mH8FSVx6TvtpB8guBUYkmJOybOg+2KWBCFBBFDJ4mFsK7lKbPEqShaAE8VmPTdgpSps5yXOumOf+6frXROf1qd6DkZXc+0cAu5DldpoulRWjs3y0RZhIPA2BtiPr2UOIma2qyAQA64lcX8OpLu6FG4QDdEwVrAwU6QAJZ7K7/mT7LdOR3tkEelxHi5SVHg+X6ameZI1rKC/NztQsm6ZuaMnvC4nUZBpKZdV89iyPIF1v3WdZgPy6tyDXj1rq6pCxpLDW/yZDCc53mxkE9xw6p6ScdpQqkFyMj1s5hJB/1Of6L+UE/MMnCoxWw1HTCLuUq5UEK5w/HGnH4xVaB4/3HCD6KoveGqFirkRPcjtlAjUxjzxdRbBXIXUxVfpts4flHXc3DhW0+lvNUGvjzurqx9C6zxEKEBulbAEsghB4qVfeiYIl8xrXqRxRAFpiFiCCmzOjjSAvlQ+R4qfIpSr1HI9slb+jl99PMTkXhC1SucMXIYVjYMjUk04IdB35ihJlKAZ/tLBU8y8zeuNJI=
-    on:
-      branch: master
-      tag: true
+    - python: "2.7"
+      script: python -m unittest discover tests/python2/
+    - python: "3.4"
+      script: python -m unittest discover tests/python3/
+    - python: "3.5"
+      script: python -m unittest discover tests/python3/
+    - python: "3.6"
+      script: python -m unittest discover tests/python3/
+    - stage: deploy
+      script: skip
+      deploy:
+        provider: pypi
+        user: norcuni
+        password:
+          secure: q9UrBosh5vLnIaSJC+Df4fkjQ01roiTCAYPvK2wLUM63fXng6KoUKJ389iRKZMdVtVR80iF2WHlRzYXKB5uBfqLaG5XaPvXC1kzRcVLcF7Sx9RPQydxGRpc/bvtCppL8CglbXh9tQzzDlH4A0xPMXIxa03mH8FSVx6TvtpB8guBUYkmJOybOg+2KWBCFBBFDJ4mFsK7lKbPEqShaAE8VmPTdgpSps5yXOumOf+6frXROf1qd6DkZXc+0cAu5DldpoulRWjs3y0RZhIPA2BtiPr2UOIma2qyAQA64lcX8OpLu6FG4QDdEwVrAwU6QAJZ7K7/mT7LdOR3tkEelxHi5SVHg+X6ameZI1rKC/NztQsm6ZuaMnvC4nUZBpKZdV89iyPIF1v3WdZgPy6tyDXj1rq6pCxpLDW/yZDCc53mxkE9xw6p6ScdpQqkFyMj1s5hJB/1Of6L+UE/MMnCoxWw1HTCLuUq5UEK5w/HGnH4xVaB4/3HCD6KoveGqFirkRPcjtlAjUxjzxdRbBXIXUxVfpts4flHXc3DhW0+lvNUGvjzurqx9C6zxEKEBulbAEsghB4qVfeiYIl8xrXqRxRAFpiFiCCmzOjjSAvlQ+R4qfIpSr1HI9slb+jl99PMTkXhC1SucMXIYVjYMjUk04IdB35ihJlKAZ/tLBU8y8zeuNJI=
+        if: type = push AND branch = master AND tag IS present
