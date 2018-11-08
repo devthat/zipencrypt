@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from test.support import TESTFN
 
-from zipencrypt import ZipFile
-from zipencrypt.zipencrypt3 import _ZipEncrypter, _ZipDecrypter, ZipInfo, ZIP_DEFLATED
+from zipencrypt import ZipFile, ZipInfo, ZIP_DEFLATED
+from zipencrypt.zipencrypt3 import _ZipEncrypter, _ZipDecrypter
 
 
 class TestEncryption(unittest.TestCase):
