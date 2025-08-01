@@ -27,5 +27,6 @@ setup(
     ),
     keywords='zipfile encryption zip password write writestr',
     packages=['zipencrypt'],
+    license="MIT",
     license_files = ('LICENSE.txt',),
 )
